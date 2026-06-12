@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# Data cache
+cache/
+*.pkl
+
+# Output
+output_*/
+reports/
+logs/
+
+# Config (contains sensitive info)
+notify_config.json
+broker_config.json
+portfolio.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.bak
