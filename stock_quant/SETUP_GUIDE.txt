@@ -1,0 +1,139 @@
+========================================
+  量化交易系统 - 完整配置指南
+========================================
+
+一、微信通知配置
+----------------------------------------
+
+1. 创建企业微信群机器人：
+   - 打开企业微信APP
+   - 进入群聊 → 右上角 → 群机器人 → 添加机器人
+   - 复制Webhook地址
+
+2. 填写配置文件 notify_config.json:
+```json
+{
+  "wechat_webhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=你的KEY",
+  "enabled": true
+}
+```
+
+3. 测试通知：
+```bash
+python -c "
+from trading_integration import Notifier
+n = Notifier()
+n.config['wechat_webhook'] = '你的webhook'
+n.config['enabled'] = True
+n.send_wechat('测试', '通知配置成功')
+"
+```
+
+
+二、券商API配置
+----------------------------------------
+
+方案A：模拟盘（推荐先用这个）
+- 无需开通，直接可用
+- 使用模拟资金10万
+- 验证策略有效性
+
+方案B：QMT量化（国金/国盛证券）
+- 资金门槛：5-50万
+- 开通流程：
+  1. 在券商APP申请开通QMT权限
+  2. 下载QMT客户端
+  3. 获取账号密码
+
+方案C：Ptrade量化（华鑫证券）
+- 资金门槛：50万
+- 开通流程：
+  1. 联系华鑫证券客户经理
+  2. 申请Ptrade权限
+  3. 获取账号密码
+
+填写 broker_config.json:
+```json
+{
+  "broker": "simulated",
+  "account": "",
+  "password": "",
+  "qmt_path": "C:\\国金QMT\\bin\\x64\\QMT.exe",
+  "ptrade_path": ""
+}
+```
+
+
+三、定时任务配置
+----------------------------------------
+
+1. 以管理员身份打开PowerShell
+
+2. 执行以下命令创建定时任务：
+```powershell
+cd C:\Users\Administrator\stock_quant
+.\scheduler\create_daily_task.ps1
+.\scheduler\create_monthly_task.ps1
+.\scheduler\create_execution_task.ps1
+```
+
+3. 验证任务是否创建成功：
+```powershell
+Get-ScheduledTask | Where-Object {$_.TaskName -like "StockQuant*"}
+```
+
+
+四、使用流程
+----------------------------------------
+
+第一步：测试系统
+```bash
+python trading_system.py --mode full
+```
+
+第二步：查看持仓
+```bash
+python trading_system.py --mode monitor
+```
+
+第三步：手动执行一次选股
+```bash
+python trading_system.py --mode select
+```
+
+第四步：查看每日风控
+```bash
+python test_daily_risk.py
+```
+
+
+五、每日操作（自动）
+----------------------------------------
+
+- 15:30 自动运行风控检查
+- 有止损信号自动执行
+- 微信通知交易结果
+
+每月操作（自动）：
+- 28日 17:00 自动选股
+- 1日 09:35 自动执行交易
+- 微信通知调仓结果
+
+
+六、文件说明
+----------------------------------------
+
+stock_quant/
+├── trading_system.py          # 主系统入口
+├── trading_integration.py     # 定时任务+通知+券商API
+├── notify_config.json         # 通知配置（需要填写）
+├── broker_config.json         # 券商配置（需要填写）
+├── portfolio.json             # 持仓数据（自动生成）
+├── scheduler/                 # 定时任务配置
+├── reports/                   # 月度报告
+├── logs/                      # 运行日志
+└── strategies/                # 策略模块
+    ├── full_system.py         # 完整选股系统
+    ├── daily_risk.py          # 每日风控
+    ├── robust_scheduler.py    # 稳健调度
+    └── optimized.py           # 优化策略
